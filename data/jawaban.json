@@ -1,0 +1,10 @@
+[
+  {
+    "pertanyaan": ["rekening", "norek", "no\\.rek", "trf", "transfer", "no rek", "noreknya"],
+    "jawaban": "BCA 1234567890 a/n PT. WA Botindo\nMandiri 0987654321 a/n WA Botindo"
+  },
+  {
+    "pertanyaan": ["kucing", "anjing", "monyet", "ayam"],
+    "jawaban": "Hewan"
+  }
+]

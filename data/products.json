@@ -1,0 +1,18 @@
+{
+  "roti": {
+    "konsumen": 5000,
+    "reseller": 3000
+  },
+  "kopi": {
+    "konsumen": 7000,
+    "reseller": 5000
+  },
+  "teh manis": {
+    "konsumen": 4000,
+    "reseller": 2500
+  },
+  "nasi goreng": {
+    "konsumen": 12000,
+    "reseller": 9000
+  }
+}

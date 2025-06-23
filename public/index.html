@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel WhatsApp Bot</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background-color: #f4f4f4; }
+    h2 { margin-top: 30px; }
+    input, textarea, button, select { margin: 5px 0; display: block; width: 100%; max-width: 500px; }
+    ul { list-style-type: none; padding: 0; }
+    li { margin: 10px 0; background: white; padding: 10px; border-radius: 6px; box-shadow: 0 0 3px rgba(0,0,0,0.1); }
+    button { background-color: #0275d8; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; }
+    button:hover { background-color: #025aa5; }
+  </style>
+</head>
+<body>
+  <h1>🤖 Admin Panel WhatsApp Auto-Reply</h1>
+
+  <!-- FAQ Biasa -->
+  <h2>💬 Kelola FAQ</h2>
+  <form id="faqForm">
+    <input type="text" id="question" placeholder="Pertanyaan..." required />
+    <textarea id="answer" placeholder="Jawaban..." required></textarea>
+    <button type="submit">Tambah FAQ</button>
+  </form>
+  <ul id="faqList"></ul>
+
+  <!-- Produk -->
+  <h2>📦 Kelola Produk & Harga</h2>
+  <form id="productForm">
+    <input type="text" id="productName" placeholder="Nama produk..." required />
+    <input type="number" id="priceKonsumen" placeholder="Harga Konsumen..." required />
+    <input type="number" id="priceReseller" placeholder="Harga Reseller..." required />
+    <button type="submit">Tambah Produk</button>
+  </form>
+  <ul id="productList"></ul>
+
+  <!-- Jawaban Jamak -->
+  <h2>🔁 Kelola Pertanyaan Jamak</h2>
+  <form id="multiQuestionForm">
+    <input type="text" id="questions" placeholder="Daftar pertanyaan (pisah dengan koma)" required />
+    <textarea id="answerMulti" placeholder="Jawaban..." required></textarea>
+    <button type="submit">Tambah Jawaban Jamak</button>
+  </form>
+  <ul id="multiQuestionList"></ul>
+
+  <script>
+    async function loadFAQ() {
+      const res = await fetch("/api/faq");
+      const data = await res.json();
+
+      const list = document.getElementById("faqList");
+      list.innerHTML = '';
+      for (const key in data) {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${key}</strong>: ${data[key]} 
+          <button onclick="hapusFAQ('${key}')">Hapus</button>`;
+        list.appendChild(li);
+      }
+    }
+
+    async function loadProducts() {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+
+      const list = document.getElementById("productList");
+      list.innerHTML = '';
+      for (const key in data) {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${key}</strong>:<br/>
+          - Konsumen: Rp${data[key].konsumen.toLocaleString()}<br/>
+          - Reseller: Rp${data[key].reseller.toLocaleString()}
+          <button onclick="hapusProduk('${key}')">Hapus</button>`;
+        list.appendChild(li);
+      }
+    }
+
+    async function loadMultiQuestions() {
+      const res = await fetch("/api/multi-questions");
+      const data = await res.json();
+
+      const list = document.getElementById("multiQuestionList");
+      list.innerHTML = '';
+      data.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${item.pertanyaan.join(', ')}</strong>: ${item.jawaban}
+          <button onclick="hapusMulti('${index}')">Hapus</button>`;
+        list.appendChild(li);
+      });
+    }
+
+    // FAQ Form Submit
+    document.getElementById('faqForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const q = document.getElementById('question').value.trim().toLowerCase();
+      const a = document.getElementById('answer').value.trim();
+
+      if (!q || !a) return alert("Isi semua kolom!");
+
+      await fetch('/api/faq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q, answer: a })
+      });
+
+      document.getElementById('faqForm').reset();
+      loadFAQ();
+    });
+
+    // Product Form Submit
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('productName').value.trim().toLowerCase();
+      const priceKonsumen = parseInt(document.getElementById('priceKonsumen').value.trim());
+      const priceReseller = parseInt(document.getElementById('priceReseller').value.trim());
+
+      if (!name || isNaN(priceKonsumen) || isNaN(priceReseller)) return alert("Isi semua kolom!");
+
+      await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, priceKonsumen, priceReseller })
+      });
+
+      document.getElementById('productForm').reset();
+      loadProducts();
+    });
+
+    // Multi Question Form Submit
+    document.getElementById('multiQuestionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const q = document.getElementById('questions').value.trim().toLowerCase();
+      const a = document.getElementById('answerMulti').value.trim();
+
+      if (!q || !a) return alert("Isi semua kolom!");
+
+      const questionsArray = q.split(',').map(q => q.trim()).filter(q => q.length > 0);
+
+      await fetch('/api/multi-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions: questionsArray, answer: a })
+      });
+
+      document.getElementById('multiQuestionForm').reset();
+      loadMultiQuestions();
+    });
+
+    async function hapusFAQ(key) {
+      if (!confirm("Yakin hapus FAQ?")) return;
+      await fetch(`/api/faq/${encodeURIComponent(key)}`, { method: 'DELETE' });
+      loadFAQ();
+    }
+
+    async function hapusProduk(key) {
+      if (!confirm("Yakin hapus produk?")) return;
+      await fetch(`/api/products/${encodeURIComponent(key)}`, { method: 'DELETE' });
+      loadProducts();
+    }
+
+    async function hapusMulti(index) {
+      if (!confirm("Yakin hapus?")) return;
+      await fetch(`/api/multi-questions/${index}`, { method: 'DELETE' });
+      loadMultiQuestions();
+    }
+
+    loadFAQ();
+    loadProducts();
+    loadMultiQuestions();
+  </script>
+</body>
+</html>
